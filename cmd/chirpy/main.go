@@ -49,7 +49,10 @@ func main() {
 
 	// API routes
 	mux.HandleFunc("GET /api/healthz", handlers.HealthzHandler(cfg))
+
+	mux.HandleFunc("POST /api/login", handlers.LoginUserHandler(cfg))
 	mux.HandleFunc("POST /api/users", handlers.CreateUserHandler(cfg))
+
 	mux.HandleFunc("GET /api/chirps", handlers.GetChirpsHandler(cfg))
 	mux.Handle("POST /api/chirps", handlers.CreateChirpHandler(cfg))
 	mux.Handle("GET /api/chirps/{chirpId}", handlers.GetChirpHandler(cfg))
