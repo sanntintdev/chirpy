@@ -26,7 +26,7 @@ func NewTokenService(secretKey []byte, issuer string) *TokenService {
 	}
 }
 
-func (ts *TokenService) GenerateToken(user *database.User, expiration time.Duration) (string, error) {
+func (ts *TokenService) GenerateToken(user database.User, expiration time.Duration) (string, error) {
 	claims := &Claims{
 		UserID: user.ID,
 		RegisteredClaims: jwt.RegisteredClaims{

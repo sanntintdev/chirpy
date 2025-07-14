@@ -31,7 +31,7 @@ func TestGenerateToken(t *testing.T) {
 	ts := NewTokenService(secretKey, issuer)
 
 	userID := uuid.New()
-	user := &database.User{
+	user := database.User{
 		ID: userID,
 	}
 	expiration := time.Hour
@@ -52,7 +52,7 @@ func TestValidateToken_ValidToken(t *testing.T) {
 	ts := NewTokenService(secretKey, issuer)
 
 	userID := uuid.New()
-	user := &database.User{
+	user := database.User{
 		ID: userID,
 	}
 	expiration := time.Hour
@@ -91,7 +91,7 @@ func TestValidateToken_ExpiredToken(t *testing.T) {
 	ts := NewTokenService(secretKey, issuer)
 
 	userID := uuid.New()
-	user := &database.User{
+	user := database.User{
 		ID: userID,
 	}
 	expiration := -time.Hour // Expired token
@@ -111,12 +111,12 @@ func TestValidateToken_WrongSecretKey(t *testing.T) {
 	secretKey := []byte("test-secret-key")
 	wrongSecretKey := []byte("wrong-secret-key")
 	issuer := "test-issuer"
-	
+
 	ts1 := NewTokenService(secretKey, issuer)
 	ts2 := NewTokenService(wrongSecretKey, issuer)
 
 	userID := uuid.New()
-	user := &database.User{
+	user := database.User{
 		ID: userID,
 	}
 	expiration := time.Hour

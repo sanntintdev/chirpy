@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/sanntintdev/chirpy/internal/auth"
@@ -29,9 +30,23 @@ func LoginUserHandler(cfg *config.APIConfig) http.HandlerFunc {
 			utils.RespondWithErr(w, http.StatusUnauthorized, "Invalid credentials", err)
 		}
 
+		const DefaultExp = 3600
+		if request.ExpiresInSeconds > DefaultExp || request.ExpiresInSeconds <= 0 {
+			request.ExpiresInSeconds = DefaultExp
+		}
+
+		tokenService := auth.NewTokenService([]byte(cfg.JWT_SECRET_KEY), cfg.JWT_ISSUER)
+		token, err := tokenService.GenerateToken(user, time.Duration(request.ExpiresInSeconds)*time.Second)
+
+		if err != nil {
+			utils.RespondWithErr(w, http.StatusInternalServerError, "Failed to generate token", err)
+			return
+		}
+
 		utils.RespondWithJSON(w, http.StatusOK, &models.UserResponse{
 			ID:        user.ID,
 			Email:     user.Email,
+			Token:     token,
 			CreatedAt: user.CreatedAt,
 			UpdatedAt: user.UpdatedAt,
 		})

@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sanntintdev/chirpy/internal/database"
 	"github.com/sanntintdev/chirpy/pkg/config"
+	"github.com/sanntintdev/chirpy/pkg/middleware"
 	"github.com/sanntintdev/chirpy/pkg/models"
 	"github.com/sanntintdev/chirpy/pkg/utils"
 )
@@ -23,13 +24,20 @@ func CreateChirpHandler(cfg *config.APIConfig) http.HandlerFunc {
 			return
 		}
 
+		// Get user ID from authenticated context
+		userID, ok := r.Context().Value(middleware.UserIDKey).(uuid.UUID)
+		if !ok {
+			utils.RespondWithErr(w, http.StatusUnauthorized, "User not authenticated", nil)
+			return
+		}
+
 		cleanedText := utils.ReplaceProfanity(request.Body)
 		ctx := r.Context()
 
 		chirp, err := cfg.DBQueries.CreateChirps(ctx, database.CreateChirpsParams{
 			ID:     uuid.New(),
 			Body:   cleanedText,
-			UserID: request.UserID,
+			UserID: userID,
 		})
 
 		if err != nil {

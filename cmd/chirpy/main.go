@@ -22,7 +22,6 @@ func main() {
 	}
 
 	dbURL := os.Getenv("DB_URL")
-
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		fmt.Println("Error opening database:", err)
@@ -31,7 +30,12 @@ func main() {
 	defer db.Close()
 
 	dbQueries := database.New(db)
-	cfg := config.NewAPIConfig(dbQueries)
+	cfg := config.NewAPIConfig(config.APIConfigParams{
+		DBQueries:      dbQueries,
+		Platform:       os.Getenv("PLATFORM"),
+		JWT_SECRET_KEY: os.Getenv("JWT_SECRET_KEY"),
+		JWT_ISSUER:     os.Getenv("JWT_ISSUER"),
+	})
 
 	mux := http.NewServeMux()
 	server := &http.Server{
@@ -54,7 +58,7 @@ func main() {
 	mux.HandleFunc("POST /api/users", handlers.CreateUserHandler(cfg))
 
 	mux.HandleFunc("GET /api/chirps", handlers.GetChirpsHandler(cfg))
-	mux.Handle("POST /api/chirps", handlers.CreateChirpHandler(cfg))
+	mux.Handle("POST /api/chirps", middleware.AuthMiddleware(cfg, handlers.CreateChirpHandler(cfg)))
 	mux.Handle("GET /api/chirps/{chirpId}", handlers.GetChirpHandler(cfg))
 
 	if err := server.ListenAndServe(); err != nil {
