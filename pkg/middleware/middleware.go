@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/sanntintdev/chirpy/internal/auth"
 	"github.com/sanntintdev/chirpy/pkg/config"
@@ -18,6 +19,7 @@ func MetricsInc(cfg *config.APIConfig, next http.Handler) http.Handler {
 type contextKey string
 
 const UserIDKey contextKey = "user_id"
+const RefreshTokenKey contextKey = "refresh_token"
 
 func AuthMiddleware(cfg *config.APIConfig, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -36,6 +38,37 @@ func AuthMiddleware(cfg *config.APIConfig, next http.Handler) http.Handler {
 		}
 
 		ctx := context.WithValue(r.Context(), UserIDKey, userID)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func ValidateRefreshTokenMiddleware(cfg *config.APIConfig, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token, err := auth.GetBearerToken(r.Header)
+		if err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		ctx := r.Context()
+		data, err := cfg.DBQueries.GetRefreshToken(ctx, token)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		if data.ExpiredAt.Before(time.Now()) {
+			http.Error(w, "Refresh token expired", http.StatusUnauthorized)
+			return
+		}
+
+		if data.RevokedAt.Valid {
+			http.Error(w, "Refresh token revoked", http.StatusUnauthorized)
+			return
+		}
+
+		ctx = context.WithValue(ctx, RefreshTokenKey, data)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

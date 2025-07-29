@@ -2,7 +2,6 @@ package auth
 
 import (
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/sanntintdev/chirpy/internal/database"
@@ -34,9 +33,8 @@ func TestGenerateToken(t *testing.T) {
 	user := database.User{
 		ID: userID,
 	}
-	expiration := time.Hour
 
-	token, err := ts.GenerateToken(user, expiration)
+	token, err := ts.GenerateToken(user)
 	if err != nil {
 		t.Fatalf("GenerateToken failed: %v", err)
 	}
@@ -55,9 +53,8 @@ func TestValidateToken_ValidToken(t *testing.T) {
 	user := database.User{
 		ID: userID,
 	}
-	expiration := time.Hour
 
-	token, err := ts.GenerateToken(user, expiration)
+	token, err := ts.GenerateToken(user)
 	if err != nil {
 		t.Fatalf("GenerateToken failed: %v", err)
 	}
@@ -94,9 +91,8 @@ func TestValidateToken_ExpiredToken(t *testing.T) {
 	user := database.User{
 		ID: userID,
 	}
-	expiration := -time.Hour // Expired token
 
-	token, err := ts.GenerateToken(user, expiration)
+	token, err := ts.GenerateToken(user)
 	if err != nil {
 		t.Fatalf("GenerateToken failed: %v", err)
 	}
@@ -119,9 +115,8 @@ func TestValidateToken_WrongSecretKey(t *testing.T) {
 	user := database.User{
 		ID: userID,
 	}
-	expiration := time.Hour
 
-	token, err := ts1.GenerateToken(user, expiration)
+	token, err := ts1.GenerateToken(user)
 	if err != nil {
 		t.Fatalf("GenerateToken failed: %v", err)
 	}

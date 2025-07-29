@@ -26,12 +26,12 @@ func NewTokenService(secretKey []byte, issuer string) *TokenService {
 	}
 }
 
-func (ts *TokenService) GenerateToken(user database.User, expiration time.Duration) (string, error) {
+func (ts *TokenService) GenerateToken(user database.User) (string, error) {
 	claims := &Claims{
 		UserID: user.ID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    ts.issuer,
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiration)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 1)),
 		},
 	}
 
