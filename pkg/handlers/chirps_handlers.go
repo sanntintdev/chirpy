@@ -91,7 +91,7 @@ func GetChirpHandler(cfg *config.APIConfig) http.HandlerFunc {
 
 		chirp, err := cfg.DBQueries.GetChirp(ctx, id)
 		if err != nil {
-			utils.RespondWithErr(w, http.StatusInternalServerError, "Failed to get chirp", err)
+			utils.RespondWithErr(w, http.StatusNotFound, "Failed to get chirp", err)
 			return
 		}
 
@@ -102,5 +102,45 @@ func GetChirpHandler(cfg *config.APIConfig) http.HandlerFunc {
 			CreatedAt: chirp.CreatedAt,
 			UpdatedAt: chirp.UpdatedAt,
 		})
+	}
+}
+
+func DeleteChirpHandler(cfg *config.APIConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		// Get authenticated user ID
+		userID, ok := r.Context().Value(middleware.UserIDKey).(uuid.UUID)
+		if !ok {
+			utils.RespondWithErr(w, http.StatusUnauthorized, "User not authenticated", nil)
+			return
+		}
+
+		id, err := uuid.Parse(r.PathValue("chirpId"))
+		if err != nil {
+			utils.RespondWithErr(w, http.StatusBadRequest, "Invalid ID", err)
+			return
+		}
+
+		// First check if chirp exists and get its owner
+		chirp, err := cfg.DBQueries.GetChirp(ctx, id)
+		if err != nil {
+			utils.RespondWithErr(w, http.StatusNotFound, "Chirp not found", err)
+			return
+		}
+
+		// Check if the authenticated user owns this chirp
+		if chirp.UserID != userID {
+			utils.RespondWithErr(w, http.StatusForbidden, "You can only delete your own chirps", nil)
+			return
+		}
+
+		err = cfg.DBQueries.DeleteChirp(ctx, id)
+		if err != nil {
+			utils.RespondWithErr(w, http.StatusInternalServerError, "Failed to delete chirp", err)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
 	}
 }

@@ -56,6 +56,7 @@ func main() {
 
 	mux.HandleFunc("POST /api/login", handlers.LoginUserHandler(cfg))
 	mux.HandleFunc("POST /api/users", handlers.CreateUserHandler(cfg))
+	mux.Handle("PUT /api/users", middleware.AuthMiddleware(cfg, handlers.UpdateUserHandler(cfg)))
 
 	mux.Handle("POST /api/refresh", middleware.ValidateRefreshTokenMiddleware(cfg, handlers.RotateTokenHandler(cfg)))
 	mux.Handle("POST /api/revoke", middleware.ValidateRefreshTokenMiddleware(cfg, handlers.RevokeTokenHandler(cfg)))
@@ -63,6 +64,7 @@ func main() {
 	mux.HandleFunc("GET /api/chirps", handlers.GetChirpsHandler(cfg))
 	mux.Handle("POST /api/chirps", middleware.AuthMiddleware(cfg, handlers.CreateChirpHandler(cfg)))
 	mux.Handle("GET /api/chirps/{chirpId}", handlers.GetChirpHandler(cfg))
+	mux.Handle("DELETE /api/chirps/{chirpId}", middleware.AuthMiddleware(cfg, handlers.DeleteChirpHandler(cfg)))
 
 	if err := server.ListenAndServe(); err != nil {
 		fmt.Println("Error starting server:", err)
