@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -61,6 +62,7 @@ func LoginUserHandler(cfg *config.APIConfig) http.HandlerFunc {
 			Email:        user.Email,
 			Token:        token,
 			RefreshToken: rfToken,
+			IsChirpyRed:  user.IsChirpyRed,
 			CreatedAt:    user.CreatedAt,
 			UpdatedAt:    user.UpdatedAt,
 		})
@@ -93,10 +95,11 @@ func CreateUserHandler(cfg *config.APIConfig) http.HandlerFunc {
 		}
 
 		utils.RespondWithJSON(w, http.StatusCreated, models.UpdateUserResponse{
-			ID:        user.ID,
-			Email:     user.Email,
-			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
+			ID:          user.ID,
+			Email:       user.Email,
+			IsChirpyRed: user.IsChirpyRed,
+			CreatedAt:   user.CreatedAt,
+			UpdatedAt:   user.UpdatedAt,
 		})
 	}
 }
@@ -142,10 +145,42 @@ func UpdateUserHandler(cfg *config.APIConfig) http.HandlerFunc {
 		}
 
 		utils.RespondWithJSON(w, http.StatusOK, models.UpdateUserResponse{
-			ID:        user.ID,
-			Email:     user.Email,
-			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
+			ID:          user.ID,
+			Email:       user.Email,
+			IsChirpyRed: user.IsChirpyRed,
+			CreatedAt:   user.CreatedAt,
+			UpdatedAt:   user.UpdatedAt,
 		})
+	}
+}
+
+func PolkaWebhookHandler(cfg *config.APIConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		request := &models.PolkaWebhookRequest{}
+		if err := utils.DecodeJSON(w, r, request); err != nil {
+			return
+		}
+
+		if request.Event != "user.upgraded" {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		ctx := r.Context()
+		_, err := cfg.DBQueries.UpdateChirpyRedById(ctx, database.UpdateChirpyRedByIdParams{
+			ID:         request.Data.UserID,
+			IsChirpyRed: true,
+		})
+
+		if err != nil {
+			if err == sql.ErrNoRows {
+				utils.RespondWithErr(w, http.StatusNotFound, "User not found", err)
+				return
+			}
+			utils.RespondWithErr(w, http.StatusInternalServerError, "Failed to update user", err)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
 	}
 }

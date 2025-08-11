@@ -66,6 +66,8 @@ func main() {
 	mux.Handle("GET /api/chirps/{chirpId}", handlers.GetChirpHandler(cfg))
 	mux.Handle("DELETE /api/chirps/{chirpId}", middleware.AuthMiddleware(cfg, handlers.DeleteChirpHandler(cfg)))
 
+	mux.HandleFunc("POST /api/polka/webhooks", handlers.PolkaWebhookHandler(cfg))
+
 	if err := server.ListenAndServe(); err != nil {
 		fmt.Println("Error starting server:", err)
 	}
