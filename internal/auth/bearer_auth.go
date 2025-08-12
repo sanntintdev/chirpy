@@ -23,3 +23,22 @@ func GetBearerToken(headers http.Header) (string, error) {
 
 	return token, nil
 }
+
+func GetPolkaToken(headers http.Header) (string, error) {
+
+	polKaToken := headers.Get("Authorization")
+	if polKaToken == "" {
+		return "", errors.New("missing authorization header")
+	}
+
+	if !strings.HasPrefix(polKaToken, "ApiKey ") {
+		return "", errors.New("authorization header must start with 'ApiKey '")
+	}
+
+	token := strings.TrimPrefix(polKaToken, "ApiKey ")
+	if token == "" {
+		return "", errors.New("ApiKey token is empty")
+	}
+
+	return token, nil
+}

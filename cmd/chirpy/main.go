@@ -35,6 +35,7 @@ func main() {
 		Platform:       os.Getenv("PLATFORM"),
 		JWT_SECRET_KEY: os.Getenv("JWT_SECRET_KEY"),
 		JWT_ISSUER:     os.Getenv("JWT_ISSUER"),
+		POLKA_KEY:      os.Getenv("POLKA_KEY"),
 	})
 
 	mux := http.NewServeMux()
@@ -66,7 +67,7 @@ func main() {
 	mux.Handle("GET /api/chirps/{chirpId}", handlers.GetChirpHandler(cfg))
 	mux.Handle("DELETE /api/chirps/{chirpId}", middleware.AuthMiddleware(cfg, handlers.DeleteChirpHandler(cfg)))
 
-	mux.HandleFunc("POST /api/polka/webhooks", handlers.PolkaWebhookHandler(cfg))
+	mux.Handle("POST /api/polka/webhooks", middleware.GetPolkaAPIKey(cfg, handlers.PolkaWebhookHandler(cfg)))
 
 	if err := server.ListenAndServe(); err != nil {
 		fmt.Println("Error starting server:", err)

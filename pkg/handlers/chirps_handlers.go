@@ -59,7 +59,47 @@ func GetChirpsHandler(cfg *config.APIConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		chirps, err := cfg.DBQueries.GetChirps(ctx)
+		// Check for author_id query parameter
+		authorIDParam := r.URL.Query().Get("author_id")
+		
+		// Check for sort query parameter (default to "asc")
+		sortParam := r.URL.Query().Get("sort")
+		if sortParam == "" {
+			sortParam = "asc"
+		}
+		
+		// Validate sort parameter
+		if sortParam != "asc" && sortParam != "desc" {
+			utils.RespondWithErr(w, http.StatusBadRequest, "Invalid sort parameter. Must be 'asc' or 'desc'", nil)
+			return
+		}
+		
+		var chirps []database.Chirp
+		var err error
+		
+		if authorIDParam != "" {
+			// Parse the author ID
+			authorID, parseErr := uuid.Parse(authorIDParam)
+			if parseErr != nil {
+				utils.RespondWithErr(w, http.StatusBadRequest, "Invalid author_id", parseErr)
+				return
+			}
+			
+			// Get chirps by author with sorting
+			if sortParam == "desc" {
+				chirps, err = cfg.DBQueries.GetChirpsByAuthorDesc(ctx, authorID)
+			} else {
+				chirps, err = cfg.DBQueries.GetChirpsByAuthor(ctx, authorID)
+			}
+		} else {
+			// Get all chirps with sorting
+			if sortParam == "desc" {
+				chirps, err = cfg.DBQueries.GetChirpsDesc(ctx)
+			} else {
+				chirps, err = cfg.DBQueries.GetChirps(ctx)
+			}
+		}
+		
 		if err != nil {
 			utils.RespondWithErr(w, http.StatusInternalServerError, "Failed to get chirps", err)
 			return

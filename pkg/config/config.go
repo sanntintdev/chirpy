@@ -12,6 +12,7 @@ type APIConfig struct {
 	Platform           string
 	JWT_SECRET_KEY     string
 	JWT_ISSUER         string
+	POLKA_KEY          string
 }
 
 type APIConfigParams struct {
@@ -19,6 +20,7 @@ type APIConfigParams struct {
 	Platform       string
 	JWT_SECRET_KEY string
 	JWT_ISSUER     string
+	POLKA_KEY      string
 }
 
 func NewAPIConfig(params APIConfigParams) *APIConfig {
@@ -28,5 +30,6 @@ func NewAPIConfig(params APIConfigParams) *APIConfig {
 		Platform:           params.Platform,
 		JWT_SECRET_KEY:     params.JWT_SECRET_KEY,
 		JWT_ISSUER:         params.JWT_ISSUER,
+		POLKA_KEY:          params.POLKA_KEY,
 	}
 }

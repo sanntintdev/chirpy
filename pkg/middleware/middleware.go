@@ -72,3 +72,22 @@ func ValidateRefreshTokenMiddleware(cfg *config.APIConfig, next http.Handler) ht
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
+
+func GetPolkaAPIKey(cfg *config.APIConfig, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token, err := auth.GetPolkaToken(r.Header)
+		if err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		ctx := r.Context()
+
+		if token != cfg.POLKA_KEY {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
